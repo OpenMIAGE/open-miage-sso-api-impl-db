@@ -145,7 +145,7 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
             OpenM_Log::debug("Remove out of date session", __CLASS__, __METHOD__, __LINE__);
             $sessionDAO->removeOutOfDate($validity);
 
-            return $this->ok()->put(self::RETURN_SSID_PARAMETER, $ssid)->put(self::RETURN_SSID_TIMER_PARAMETER, $validityTime);
+            return $this->ok()->put(self::RETURN_SSID_PARAMETER, $ssid)->put(self::RETURN_SSID_TIMER_PARAMETER, intval($validityTime));
         } else
             return $this->error(self::RETURN_ERROR_MESSAGE_NO_AUTHORIZATION_VALUE);
     }
