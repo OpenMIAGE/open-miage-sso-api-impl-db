@@ -193,7 +193,7 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
 
         if ($session == null)
             return $this->error(self::RETURN_ERROR_MESSAGE_NO_SESSION_ACTIVE_VALUE);
-        if ($session->get(OpenM_SSO_SessionDAO::IP_HASH != $this->getClientIp()))
+        if ($session->get(OpenM_SSO_SessionDAO::IP_HASH) != $this->getClientIp())
             return $this->error(self::RETURN_ERROR_MESSAGE_NOT_YOUR_SSID_VALUE);
 
         OpenM_Log::debug("remove session $SSID from DAO", __CLASS__, __METHOD__, __LINE__);
