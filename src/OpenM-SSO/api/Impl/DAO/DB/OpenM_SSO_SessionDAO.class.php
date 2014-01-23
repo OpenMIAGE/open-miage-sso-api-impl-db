@@ -1,6 +1,6 @@
 <?php
 
-Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_DAO");
+Import::php("OpenM-SSO.api.Impl.DAO.DB.OpenM_SSO_DAO_DB");
 
 /**
  * Description of OpenM_SSO_SessionDAO
@@ -9,7 +9,7 @@ Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_DAO");
  * @subpackage OpenM\OpenM-SSO\api\Impl\DAO 
  * @author Gaël Saunier
  */
-class OpenM_SSO_SessionDAO extends OpenM_SSO_DAO {
+class OpenM_SSO_SessionDAO extends OpenM_SSO_DAO_DB {
 
     const SSO_TABLE_NAME = "OpenM_SSO_SESSION";
     const SSID = "SSID";

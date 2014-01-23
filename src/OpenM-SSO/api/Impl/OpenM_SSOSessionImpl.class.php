@@ -1,6 +1,5 @@
 <?php
 
-Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_APISessionDAO");
 Import::php("OpenM-SSO.api.Impl.OpenM_SSOImpl");
 Import::php("OpenM-SSO.client.OpenM_SSOSession");
 Import::php("OpenM-SSO.client.OpenM_SSOSessionLocalManager");
@@ -15,20 +14,23 @@ Import::php("util.http.OpenM_URL");
  * @subpackage OpenM\OpenM-SSO\api\Impl 
  * @author Gaël Saunier
  */
-class OpenM_SSOSessionImpl implements OpenM_SSOSession {
+class OpenM_SSOSessionImpl extends OpenM_SSOCommonImpl implements OpenM_SSOSession {
 
     private $api;
     private $ssid;
     private static $instances;
+    private $sessionDAO;
 
     /**
      * @return OpenM_SSOSession
      */
     public function __construct($url) {
+        parent::__construct();
         if (OpenM_URL::isValid($url))
             $this->api = $url;
         else
             OpenM_Log::debug("url not valid", __CLASS__, __METHOD__, __LINE__);
+        $this->sessionDAO = self::$daoFactory->get("OpenM_SSO_SessionDAO");
     }
 
     public static function getSession($url) {
@@ -59,8 +61,7 @@ class OpenM_SSOSessionImpl implements OpenM_SSOSession {
         $session = null;
         if (OpenM_SSOSessionLocalManager::isAPILocal()) {
             OpenM_Log::debug("load local session", __CLASS__, __METHOD__, __LINE__);
-            $sessionDAO = new OpenM_SSO_SessionDAO();
-            $session = $sessionDAO->get(OpenM_SSOSessionLocalManager::getSSID());
+            $session = $this->sessionDAO->get(OpenM_SSOSessionLocalManager::getSSID());
         } else {
             OpenM_Log::debug("load SSOImpl session", __CLASS__, __METHOD__, __LINE__);
             $ssoImpl = OpenM_SSOImpl::getInstance();
@@ -72,10 +73,8 @@ class OpenM_SSOSessionImpl implements OpenM_SSOSession {
             return false;
         }
 
-        OpenM_Log::debug("load APISessionDAO", __CLASS__, __METHOD__, __LINE__);
-        $sessionDAO = new OpenM_SSO_APISessionDAO();
         OpenM_Log::debug("load APISession from DAO", __CLASS__, __METHOD__, __LINE__);
-        $s = $sessionDAO->get($session->get(OpenM_SSO_SessionDAO::SSID), $this->api);
+        $s = $this->sessionDAO->get($session->get(OpenM_SSO_SessionDAO::SSID), $this->api);
         if ($s != null) {
             OpenM_Log::debug("APISession from DAO found", __CLASS__, __METHOD__, __LINE__);
             $end_time = $s->get(OpenM_SSO_APISessionDAO::END_TIME)->toInt();
@@ -93,7 +92,7 @@ class OpenM_SSOSessionImpl implements OpenM_SSOSession {
         $result = OpenM_RESTControllerClient::call($this->api, "OpenM_SSO", "openSession", array(
                     $session->get(OpenM_SSO_SessionDAO::OID),
                     $session->get(OpenM_SSO_SessionDAO::API_SSO_TOKEN
-                        )));
+        )));
 
         if ($result->containsKey(OpenM_Service::RETURN_ERROR_PARAMETER)) {
             OpenM_Log::debug("Remote SSO session error", __CLASS__, __METHOD__, __LINE__);
@@ -101,11 +100,11 @@ class OpenM_SSOSessionImpl implements OpenM_SSOSession {
         }
 
         OpenM_Log::debug("remove all outOfDate APISession", __CLASS__, __METHOD__, __LINE__);
-        $sessionDAO->removeOutOfDate();
+        $this->sessionDAO->removeOutOfDate();
         $this->ssid = $result->get(OpenM_SSO::RETURN_SSID_PARAMETER);
         $validity = $result->get(OpenM_SSO::RETURN_SSID_TIMER_PARAMETER);
         OpenM_Log::debug("Create new APISession (" . $this->api . ", " . $this->ssid . ", $validity)", __CLASS__, __METHOD__, __LINE__);
-        $sessionDAO->create($session->get(OpenM_SSO_SessionDAO::SSID), $this->api, $this->ssid, $validity);
+        $this->sessionDAO->create($session->get(OpenM_SSO_SessionDAO::SSID), $this->api, $this->ssid, $validity);
         return true;
     }
 
