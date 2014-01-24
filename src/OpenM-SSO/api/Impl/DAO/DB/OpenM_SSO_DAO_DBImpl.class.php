@@ -9,7 +9,7 @@ Import::php("OpenM-Services.api.Impl.DAO.OpenM_DAO");
  * @subpackage OpenM\OpenM-SSO\api\Impl\DAO\DB 
  * @author Gaël Saunier
  */
-class OpenM_SSO_DAO_DBImpl extends OpenM_DAO {
+abstract class OpenM_SSO_DAO_DBImpl extends OpenM_DAO {
     
     const DAO_CONFIG_FILE_NAME = "OpenM_SSO.DAO.config.file.path";
     const PREFIX = "OpenM_SSO.DAO.prefix";
