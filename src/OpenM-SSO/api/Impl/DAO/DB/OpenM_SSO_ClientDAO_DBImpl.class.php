@@ -1,22 +1,16 @@
 <?php
 
-Import::php("OpenM-SSO.api.Impl.DAO.DB.OpenM_SSO_DAO_DB");
+Import::php("OpenM-SSO.api.Impl.DAO.DB.OpenM_SSO_DAO_DBImpl");
+Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_ClientDAO");
 
 /**
- * Description of OpenM_SSO_ClientDAO
+ * Description of OpenM_SSO_ClientDAO_DBImpl
  *
  * @package OpenM 
- * @subpackage OpenM\OpenM-SSO\api\Impl\DAO 
+ * @subpackage OpenM\OpenM-SSO\api\Impl\DAO\DB
  * @author Gaël Saunier
  */
-class OpenM_SSO_ClientDAO extends OpenM_SSO_DAO_DB {
-
-    const SSO_TABLE_NAME = "OpenM_SSO_CLIENT";
-    const ID = "client_id";
-    const IP_HASH = "ip_hash";
-    const IS_VALID = "is_valid";
-    const INSTALLER_USER_ID = "install_user_id";
-    const TIME = "time";
+class OpenM_SSO_ClientDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_SSO_ClientDAO {
 
     public function create($ip_hash, $install_user_id, $is_valid = false) {
         $time = time();

@@ -1,22 +1,16 @@
 <?php
 
-Import::php("OpenM-SSO.api.Impl.DAO.DB.OpenM_SSO_DAO_DB");
+Import::php("OpenM-SSO.api.Impl.DAO.DB.OpenM_SSO_DAO_DBImpl");
+Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_SessionDAO");
 
 /**
- * Description of OpenM_SSO_SessionDAO
+ * Description of OpenM_SSO_SessionDAO_DBImpl
  *
  * @package OpenM 
- * @subpackage OpenM\OpenM-SSO\api\Impl\DAO 
+ * @subpackage OpenM\OpenM-SSO\api\Impl\DAO\DB
  * @author Gaël Saunier
  */
-class OpenM_SSO_SessionDAO extends OpenM_SSO_DAO_DB {
-
-    const SSO_TABLE_NAME = "OpenM_SSO_SESSION";
-    const SSID = "SSID";
-    const OID = "oid";
-    const IP_HASH = "ip_hash";
-    const BEGIN_TIME = "begin_time";
-    const API_SSO_TOKEN = "api_sso_token";
+class OpenM_SSO_SessionDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_SSO_SessionDAO {
 
     public function create($ssid, $oid, $ip_hash, $ssoApiToken) {
         $time = time();

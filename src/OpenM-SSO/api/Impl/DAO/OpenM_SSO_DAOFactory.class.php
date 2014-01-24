@@ -18,10 +18,11 @@ class OpenM_SSO_DAOFactory {
     }
 
     public function get($dao) {
-        Import::php($this->impl . ".$dao");
-        if (!class_exists($dao))
-            throw new InvalidArgumentException("dao must be an existing class");
-        return new $dao();
+        $class = $dao . "_" . substr(strrchr($this->impl, "."), 1) . "Impl";
+        Import::php($this->impl . "." . $class);
+        if (!class_exists($class))
+            throw new InvalidArgumentException("dao must have an existing implementation");
+        return new $class();
     }
 
 }

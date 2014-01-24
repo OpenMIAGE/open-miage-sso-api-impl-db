@@ -1,21 +1,16 @@
 <?php
 
-Import::php("OpenM-SSO.api.Impl.DAO.DB.OpenM_SSO_DAO_DB");
+Import::php("OpenM-SSO.api.Impl.DAO.DB.OpenM_SSO_DAO_DBImpl");
+Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_AdminDAO");
 
 /**
- * Description of OpenM_SSO_AdminDAO
+ * Description of OpenM_SSO_AdminDAO_DBImpl
  *
  * @package OpenM 
- * @subpackage OpenM\OpenM-SSO\api\Impl\DAO 
+ * @subpackage OpenM\OpenM-SSO\api\Impl\DAO\DB
  * @author Gaël Saunier
  */
-class OpenM_SSO_AdminDAO extends OpenM_SSO_DAO_DB {
-
-    const SSO_TABLE_NAME = "OpenM_SSO_ADMIN";
-    const USER_ID = "user_id";
-    const USER_LEVEL = "user_level";
-    const LEVEL_ADMIN = "1";
-    const LEVEL_SUPER_ADMIN = "2";
+class OpenM_SSO_AdminDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_SSO_AdminDAO {
 
     public function create($user_id, $user_level) {
         self::$db->request(OpenM_DB::insert(self::SSO_TABLE_NAME, array(
@@ -31,11 +26,6 @@ class OpenM_SSO_AdminDAO extends OpenM_SSO_DAO_DB {
         self::$db->request(OpenM_DB::delete(self::SSO_TABLE_NAME, array(self::USER_ID, $userId)));
     }
 
-    /**
-     * 
-     * @param type $userId
-     * @return HashtableString
-     */
     public function get($userId = null) {
         if ($userId != null) {
             $array = array(self::USER_ID => $userId);
