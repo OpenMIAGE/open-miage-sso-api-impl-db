@@ -1,18 +1,12 @@
 <?php
 
+Import::php("OpenM-SSO.api.Impl.OpenM_SSOCommonImpl");
 Import::php("OpenM-SSO.api.OpenM_SSO");
-Import::php("util.Properties");
 Import::php("OpenM-ID.api.OpenM_ID");
 Import::php("OpenM-ID.api.OpenM_ID_Tool");
-Import::php("OpenM-Services.api.Impl.OpenM_ServiceImpl");
 Import::php("OpenM-Services.client.OpenM_ServiceClientImpl");
 Import::php("util.http.OpenM_Server");
 Import::php("util.http.OpenM_URL");
-Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_SessionDAO");
-Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_AdminDAO");
-Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_ClientDAO");
-Import::php("OpenM-SSO.api.Impl.OpenM_SSOAdminImpl");
-Import::php("util.OpenM_Log");
 Import::php("util.time.Date");
 Import::php("util.time.Delay");
 if (!Import::php("Auth/OpenID/CryptUtil.php"))
@@ -24,7 +18,7 @@ if (!Import::php("Auth/OpenID/CryptUtil.php"))
  * @subpackage OpenM\OpenM-SSO\api\Impl 
  * @author Gaël Saunier
  */
-class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
+class OpenM_SSOImpl extends OpenM_SSOCommonImpl implements OpenM_SSO {
 
     const SPECIFIC_CONFIG_FILE_NAME = "OpenM_SSO.config.file.path";
     const API_PATH = "OpenM_ID.api.path";
@@ -46,11 +40,20 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
     private static $sso;
     private $OpenM_IDClient;
     private $session;
+    private $adminDAO;
+    private $clientDAO;
+    private $clientRightsDAO;
+    private $sessionDAO;
 
     public function __construct() {
+        parent::__construct();
         self::$sso = $this;
         $this->init();
         $this->OpenM_IDClient = new OpenM_ServiceClientImpl(self::$apiPath, "OpenM_ID", false);
+        $this->adminDAO = self::$daoFactory->get("OpenM_SSO_AdminDAO");
+        $this->clientDAO = self::$daoFactory->get("OpenM_SSO_ClientDAO");
+        $this->clientRightsDAO = self::$daoFactory->get("OpenM_SSO_ClientRightsDAO");
+        $this->sessionDAO = self::$daoFactory->get("OpenM_SSO_SessionDAO");
     }
 
     public function addClient($oid, $token) {
@@ -74,18 +77,15 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
             return $status;
 
         $id = OpenM_ID_Tool::getId($oid);
-        $adminDAO = new OpenM_SSO_AdminDAO();
         OpenM_Log::debug("check admin SSO rights", __CLASS__, __METHOD__, __LINE__);
-        $admin = $adminDAO->get($id);
+        $admin = $this->adminDAO->get($id);
 
-        $clientDAO = new OpenM_SSO_ClientDAO();
         OpenM_Log::debug("add client validation request", __CLASS__, __METHOD__, __LINE__);
-        $client = $clientDAO->create($this->getClientIp(), $id, ($admin != null));
+        $client = $this->clientDAO->create($this->getClientIp(), $id, ($admin != null));
         if ($admin != null) {
             OpenM_Log::debug("admin calling", __CLASS__, __METHOD__, __LINE__);
-            $clientRightsDAO = new OpenM_SSO_ClientRightsDAO();
             OpenM_Log::debug("add rights on OpenM_SSOAdmin methods", __CLASS__, __METHOD__, __LINE__);
-            $clientRightsDAO->create($client->get(OpenM_SSO_ClientDAO::ID), OpenM_SSOAdmin . "::*");
+            $this->clientRightsDAO->create($client->get(OpenM_SSO_ClientDAO::ID), OpenM_SSOAdmin . "::*");
         }
         OpenM_Log::debug("return client ID : " . $client->get(OpenM_SSO_ClientDAO::ID), __CLASS__, __METHOD__, __LINE__);
         return $this->ok()->put(self::RETURN_CLIENT_ID_PARAMETER, $client->get(OpenM_SSO_ClientDAO::ID));
@@ -100,7 +100,7 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
             return $this->error("token must be a string");
         if (!OpenM_ID_Tool::isTokenValid($token))
             return $this->error("token must be in a valid format");
-        
+
         if (self::$serviceId == null)
             throw new OpenM_ServiceImplException(self::SERVICE_ID . " not defined");
 
@@ -110,10 +110,9 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
         $OpenM_ID_ip_hash = null;
         if (OpenM_ID_Tool::isTokenApi($token)) {
             OpenM_Log::debug("It's an API token", __CLASS__, __METHOD__, __LINE__);
-            $clientDAO = new OpenM_SSO_ClientDAO();
             OpenM_Log::debug("check if client is valid", __CLASS__, __METHOD__, __LINE__);
             $ip_hash = $this->getClientIp();
-            if ($clientDAO->getValidated($ip_hash) == null)
+            if ($this->clientDAO->getValidated($ip_hash) == null)
                 $this->error(self::RETURN_ERROR_MESSAGE_CLIENT_NOT_VALID_VALUE);
             OpenM_Log::debug("Client is valid", __CLASS__, __METHOD__, __LINE__);
             $OpenM_ID_ip_hash = OpenM_ID_Tool::getClientIp(self::$ipHashAlgo);
@@ -131,11 +130,9 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
             $ssid = OpenM_Crypto::hash(self::$hashAlgo, OpenM_URL::encode(self::$secret . $oid . Auth_OpenID_CryptUtil::randomString(200) . $ssoApiToken . self::$secret));
             $ssid .= "_" . microtime(true);
 
-            $sessionDAO = new OpenM_SSO_SessionDAO();
-
             //add new session
             OpenM_Log::debug("Create session $ssid on $oid ($ssoApiToken)", __CLASS__, __METHOD__, __LINE__);
-            $this->session = $sessionDAO->create($ssid, $oid, $ip_hash, $ssoApiToken);
+            $this->session = $this->sessionDAO->create($ssid, $oid, $ip_hash, $ssoApiToken);
 
             $validityTime = self::$validityTime;
             OpenM_Log::debug("validity time : " . $validityTime, __CLASS__, __METHOD__, __LINE__);
@@ -143,10 +140,11 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
             //delete all outOfDate session.
             $validity = new Delay($validityTime);
             OpenM_Log::debug("Remove out of date session", __CLASS__, __METHOD__, __LINE__);
-            $sessionDAO->removeOutOfDate($validity);
+            $this->sessionDAO->removeOutOfDate($validity);
 
             return $this->ok()->put(self::RETURN_SSID_PARAMETER, $ssid)->put(self::RETURN_SSID_TIMER_PARAMETER, intval($validityTime));
-        } else
+        }
+        else
             return $this->error(self::RETURN_ERROR_MESSAGE_NO_AUTHORIZATION_VALUE);
     }
 
@@ -157,8 +155,7 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
             return $this->error("SSID is not in a valid format");
 
         OpenM_Log::debug("load session if exist", __CLASS__, __METHOD__, __LINE__);
-        $sessionDAO = new OpenM_SSO_SessionDAO();
-        $session = $sessionDAO->get($SSID);
+        $session = $this->sessionDAO->get($SSID);
 
         if ($session == null) {
             return $this->error(self::RETURN_ERROR_MESSAGE_NO_SESSION_ACTIVE_VALUE);
@@ -187,17 +184,16 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
         if (!OpenM_ID_Tool::isTokenValid($SSID))
             return $this->error("SSID is not in a valid format");
 
-        $sessionDAO = new OpenM_SSO_SessionDAO();
         OpenM_Log::debug("Search session $SSID in DAO", __CLASS__, __METHOD__, __LINE__);
-        $session = $sessionDAO->get($SSID);
+        $session = $this->sessionDAO->get($SSID);
 
         if ($session == null)
             return $this->error(self::RETURN_ERROR_MESSAGE_NO_SESSION_ACTIVE_VALUE);
-        if ($session->get(OpenM_SSO_SessionDAO::IP_HASH != $this->getClientIp()))
+        if ($session->get(OpenM_SSO_SessionDAO::IP_HASH) != $this->getClientIp())
             return $this->error(self::RETURN_ERROR_MESSAGE_NOT_YOUR_SSID_VALUE);
 
         OpenM_Log::debug("remove session $SSID from DAO", __CLASS__, __METHOD__, __LINE__);
-        $sessionDAO->remove($SSID);
+        $this->sessionDAO->remove($SSID);
 
         return $this->ok();
     }
@@ -219,8 +215,7 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
         if (self::$serviceId != null && self::$serviceId != "")
             throw new OpenM_ServiceImplException("Service already installed");
 
-        $adminDAO = new OpenM_SSO_AdminDAO();
-        $admins = $adminDAO->get();
+        $admins = $this->adminDAO->get();
         if ($admins->size() > 0)
             throw new OpenM_ServiceImplException("Admin already exist in database. first installation must be launch without any Admin in database");
 
@@ -231,7 +226,7 @@ class OpenM_SSOImpl extends OpenM_ServiceImpl implements OpenM_SSO {
             throw new OpenM_ServiceImplException($return->get(self::RETURN_ERROR_MESSAGE_PARAMETER));
 
         OpenM_Log::debug("add $oid is now the first SUPER ADMIN of this API", __CLASS__, __METHOD__, __LINE__);
-        $adminDAO->create(OpenM_ID_Tool::getId($oid), OpenM_SSO_AdminDAO::LEVEL_SUPER_ADMIN);
+        $this->adminDAO->create(OpenM_ID_Tool::getId($oid), OpenM_SSO_AdminDAO::LEVEL_SUPER_ADMIN);
 
         OpenM_Log::debug("API installed in OpenM-ID provider", __CLASS__, __METHOD__, __LINE__);
         $serviceId = $return->get(OpenM_ID::RETURN_SERVICE_ID_PARAMETER);
