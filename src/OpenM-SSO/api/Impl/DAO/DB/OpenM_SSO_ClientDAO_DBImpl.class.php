@@ -19,14 +19,14 @@ class OpenM_SSO_ClientDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_S
                     self::IS_VALID => ($is_valid) ? 1 : 0,
                     self::INSTALLER_USER_ID => $install_user_id,
                     self::TIME => $time
-                )));
+        )));
 
         return self::$db->request_fetch_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME, array(
-                    self::IP_HASH => $ip_hash,
-                    self::IS_VALID => ($is_valid) ? 1 : 0,
-                    self::INSTALLER_USER_ID => $install_user_id,
-                    self::TIME => $time
-                )));
+                            self::IP_HASH => $ip_hash,
+                            self::IS_VALID => ($is_valid) ? 1 : 0,
+                            self::INSTALLER_USER_ID => $install_user_id,
+                            self::TIME => $time
+        )));
     }
 
     public function removeOutOfDate(Delay $validity) {
@@ -38,7 +38,7 @@ class OpenM_SSO_ClientDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_S
     public function remove($clientId) {
         self::$db->request(OpenM_DB::delete(self::SSO_TABLE_NAME, array(
                     self::ID => $clientId
-                )));
+        )));
     }
 
     public function getALL($notValidOnly = true) {
@@ -48,10 +48,10 @@ class OpenM_SSO_ClientDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_S
         return self::$db->request_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME, $array), self::ID);
     }
 
-    public function get($clientIp) {
-        return self::$db->request_fetch_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME, array(
-                            self::IP_HASH => $clientIp
-                        )), self::ID);
+    public function get($clientId) {
+        return self::$db->request_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME, array(
+                            self::ID => $clientId
+        )));
     }
 
     public function getValidated($ip_hash) {

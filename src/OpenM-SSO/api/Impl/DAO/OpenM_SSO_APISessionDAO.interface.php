@@ -20,6 +20,8 @@ interface OpenM_SSO_APISessionDAO extends OpenM_SSO_DAO {
     public function create($ssid, $api_url, $api_ssid, $validity);
 
     public function removeOutOfDate();
+    
+    public function get($ssid, $api_url);
 }
 
 ?>

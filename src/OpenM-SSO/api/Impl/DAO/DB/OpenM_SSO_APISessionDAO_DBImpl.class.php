@@ -32,13 +32,6 @@ class OpenM_SSO_APISessionDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements Ope
         self::$db->request("DELETE FROM " . self::SSO_TABLE_NAME . " WHERE " . self::END_TIME . "<" . $now->getTime());
     }
 
-    public function remove($ssid, $api_url = null) {
-        $array = array(self::API_PATH, $api_url);
-        if ($api_url != null)
-            $array[self::SSID] = $ssid;
-        self::$db->request(OpenM_DB::delete(self::SSO_TABLE_NAME, $array));
-    }
-
     public function get($ssid, $api_url) {
         return self::$db->request_fetch_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME, array(
                             self::API_PATH => $api_url,

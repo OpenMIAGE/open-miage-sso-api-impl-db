@@ -24,7 +24,7 @@ interface OpenM_SSO_ClientDAO extends OpenM_SSO_DAO {
 
     public function getALL($notValidOnly = true);
 
-    public function get($clientIp);
+    public function get($clientId);
 
     public function getValidated($ip_hash);
 
