@@ -14,7 +14,7 @@ class OpenM_SSO_SessionDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_
 
     public function create($ssid, $oid, $ip_hash, $ssoApiToken) {
         $time = time();
-        self::$db->request(OpenM_DB::insert(self::SSO_TABLE_NAME, array(
+        self::$db->request(OpenM_DB::insert($this->getTABLE(self::SSO_TABLE_NAME), array(
                     self::SSID => $ssid,
                     self::BEGIN_TIME => $time,
                     self::OID => $oid,
@@ -30,15 +30,15 @@ class OpenM_SSO_SessionDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_
     public function removeOutOfDate(Delay $validity) {
         $now = new Date();
         $outOfDate = $now->less($validity);
-        self::$db->request("DELETE FROM " . self::SSO_TABLE_NAME . " WHERE " . self::BEGIN_TIME . "<" . $outOfDate->getTime());
+        self::$db->request("DELETE FROM " . $this->getTABLE(self::SSO_TABLE_NAME) . " WHERE " . self::BEGIN_TIME . "<" . $outOfDate->getTime());
     }
 
     public function remove($ssid) {
-        self::$db->request(OpenM_DB::delete(self::SSO_TABLE_NAME, array(self::SSID, $ssid)));
+        self::$db->request(OpenM_DB::delete($this->getTABLE(self::SSO_TABLE_NAME), array(self::SSID, $ssid)));
     }
 
     public function get($ssid) {
-        return self::$db->request_fetch_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME, array(self::SSID => $ssid)));
+        return self::$db->request_fetch_HashtableString(OpenM_DB::select($this->getTABLE(self::SSO_TABLE_NAME), array(self::SSID => $ssid)));
     }
 
 }

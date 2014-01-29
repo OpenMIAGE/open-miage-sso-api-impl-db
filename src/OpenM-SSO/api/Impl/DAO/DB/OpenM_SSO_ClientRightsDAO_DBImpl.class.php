@@ -13,7 +13,7 @@ Import::php("OpenM-SSO.api.Impl.DAO.OpenM_SSO_ClientRightsDAO");
 class OpenM_SSO_ClientRightsDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements OpenM_SSO_ClientRightsDAO {
 
     public function create($clientId, $rights) {
-        self::$db->request(OpenM_DB::insert(self::SSO_TABLE_NAME, array(
+        self::$db->request(OpenM_DB::insert($this->getTABLE(self::SSO_TABLE_NAME), array(
                     self::CLIENT_ID => $clientId,
                     self::RIGHTS => $rights
         )));
@@ -23,14 +23,14 @@ class OpenM_SSO_ClientRightsDAO_DBImpl extends OpenM_SSO_DAO_DBImpl implements O
     }
 
     public function remove($rightId) {
-        self::$db->request(OpenM_DB::delete(self::SSO_TABLE_NAME, array(self::ID, $rightId)));
+        self::$db->request(OpenM_DB::delete($this->getTABLE(self::SSO_TABLE_NAME), array(self::ID, $rightId)));
     }
 
     public function get($clientId = null) {
         if ($clientId != null)
-            return self::$db->request_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME, array(self::CLIENT_ID => $clientId)), self::ID);
+            return self::$db->request_HashtableString(OpenM_DB::select($this->getTABLE(self::SSO_TABLE_NAME), array(self::CLIENT_ID => $clientId)), self::ID);
         else
-            return self::$db->request_HashtableString(OpenM_DB::select(self::SSO_TABLE_NAME), self::ID);
+            return self::$db->request_HashtableString(OpenM_DB::select($this->getTABLE(self::SSO_TABLE_NAME)), self::ID);
     }
 
     public function getFromClientIp($clientIp) {
