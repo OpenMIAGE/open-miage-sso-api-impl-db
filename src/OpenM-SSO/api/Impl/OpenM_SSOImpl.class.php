@@ -247,7 +247,7 @@ class OpenM_SSOImpl extends OpenM_SSOCommonImpl implements OpenM_SSO {
         $path = $p->get(self::SPECIFIC_CONFIG_FILE_NAME);
         if ($path == null)
             throw new OpenM_ServiceImplException(self::SPECIFIC_CONFIG_FILE_NAME . " not defined in " . self::CONFIG_FILE_NAME);
-        $p2 = Properties::fromFile($path);
+        $p2 = Properties::fromFile(dirname(self::CONFIG_FILE_NAME) . "/" . $path);
         self::$secret = $p2->get(self::HASH_SECRET);
         if (self::$secret == null)
             throw new OpenM_ServiceImplException(self::HASH_SECRET . " not defined in " . $path);
