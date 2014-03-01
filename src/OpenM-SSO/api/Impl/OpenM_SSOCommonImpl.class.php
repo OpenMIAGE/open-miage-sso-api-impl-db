@@ -26,7 +26,7 @@ class OpenM_SSOCommonImpl extends OpenM_ServiceImpl {
         $path = $p->get(OpenM_SSOImpl::SPECIFIC_CONFIG_FILE_NAME);
         if ($path == null)
             throw new OpenM_ServiceImplException(OpenM_SSOImpl::SPECIFIC_CONFIG_FILE_NAME . " not defined in " . self::CONFIG_FILE_NAME);
-        $p2 = Properties::fromFile($path);
+        $p2 = Properties::fromFile(dirname(self::CONFIG_FILE_NAME) . "/" . $path);
         $impl = $p2->get(self::DAO_IMPL_PACKAGE);
         if ($impl == null)
             throw new OpenM_ServiceImplException(self::DAO_IMPL_PACKAGE . " not defined in " . $path);
